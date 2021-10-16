@@ -1,12 +1,13 @@
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity reg0 is
+entity reg1 is
 
   port (
     input1 : in std_logic_vector (3 downto 0);
-    input2 : in std_logic_vector (12 downto 0);
+    input2 : in std_logic_vector (11 downto 0);
     res : in std_logic;
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
@@ -14,9 +15,9 @@ entity reg0 is
     output2 : out std_logic_vector (49 downto 0)
     );
     
-end entity reg0;
+end entity reg1;
 
-architecture behavioral of reg0 is
+architecture behavioral of reg1 is
 
 signal storedbits: std_logic_vector(63 downto 0);
 
@@ -37,7 +38,7 @@ p_clk: process (res, clk, mode)
     elsif mode = "00" and clk'event and clk ='1' then
       storedbits <= storedbits(59 downto 12) & input1 & storedbits(11 downto 0);
     elsif mode = "01" and clk'event and clk ='1' then
-      storedbits <= storedbits(50 downto 12) & input2 & storedbits(11 downto 0);
+      storedbits <= storedbits(51 downto 12) & input2 & storedbits(11 downto 0);
     end if;
   end process p_clk;
 
