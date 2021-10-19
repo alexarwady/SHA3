@@ -7,7 +7,7 @@ entity reg1 is
 
   port (
     input1 : in std_logic_vector (3 downto 0);
-    input2 : in std_logic_vector (11 downto 0);
+    input2 : in std_logic_vector (24 downto 0);
     res : in std_logic;
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
@@ -20,6 +20,7 @@ end entity reg1;
 architecture behavioral of reg1 is
 
 signal storedbits: std_logic_vector(63 downto 0);
+signal count: integer := 0;
 
 begin
 
@@ -29,16 +30,35 @@ begin
 
 p_clk: process (res, clk, mode)
   begin
-    if res='0' then          
-      output1 <= (others => '0');
-      output2 <= (others => '0');
+    if res='0' then 
       storedbits <= (others => '0');
+      count <= 0;
     elsif mode = "10" and clk'event and clk ='1' then 
       storedbits <= storedbits(59 downto 0) & input1;
     elsif mode = "00" and clk'event and clk ='1' then
       storedbits <= storedbits(59 downto 12) & input1 & storedbits(11 downto 0);
     elsif mode = "01" and clk'event and clk ='1' then
-      storedbits <= storedbits(51 downto 12) & input2 & storedbits(11 downto 0);
+      storedbits(63 - count) <= input2(23);
+      storedbits(59 - count) <= input2(8);
+      storedbits(55 - count) <= input2(19);
+      storedbits(51 - count) <= input2(4);
+      storedbits(47 - count) <= input2(14);
+      storedbits(43 - count) <= input2(20);
+      storedbits(39 - count) <= input2(10);
+      storedbits(35 - count) <= input2(21);
+      storedbits(31 - count) <= input2(6);
+      storedbits(27 - count) <= input2(17);
+      storedbits(23 - count) <= input2(2);
+      storedbits(19 - count) <= input2(12);
+
+        if count = 0 then
+          storedbits(15) <= input2(0);
+        elsif count = 2 then
+          storedbits(14) <= input2(0);
+        end if;
+      
+      count <= count + 1 mod 4;
+
     end if;
   end process p_clk;
 

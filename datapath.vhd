@@ -9,7 +9,7 @@ entity datapath is
     ram_in: out std_logic_vector(7 downto 0);
     clk: in std_logic;
     res: in std_logic;
-    control: in std_logic_vector(33 downto 0)
+    control: in std_logic_vector(32 downto 0)
     );
     
 end entity datapath;
@@ -27,7 +27,7 @@ end component;
 component reg0 is
   port (
     input1 : in std_logic_vector (3 downto 0);
-    input2 : in std_logic_vector (12 downto 0);
+    input2 : in std_logic_vector (24 downto 0);
     res : in std_logic;
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
@@ -39,7 +39,7 @@ end component;
 component reg1 is
   port (
     input1 : in std_logic_vector (3 downto 0);
-    input2 : in std_logic_vector (11 downto 0);
+    input2 : in std_logic_vector (24 downto 0);
     res : in std_logic;
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
@@ -61,7 +61,7 @@ component rho_unit is
     input : in std_logic_vector (3 downto 0);
     res : in std_logic;
     clk : in std_logic;
-    shift : std_logic_vector (7 downto 0);
+    shift : in std_logic_vector (7 downto 0);
     output : out std_logic_vector (3 downto 0)
     );  
 end component;
@@ -104,8 +104,6 @@ component interleave is
 end component;
 
 signal deinterleave_sig_r0, deinterleave_sig_r1: std_logic_vector(3 downto 0);
-signal reg0_sig_13: std_logic_vector(12 downto 0);
-signal reg1_sig_12: std_logic_vector(11 downto 0);
 signal rho0_out, rho1_out, rho0_in, rho1_in: std_logic_vector(3 downto 0);
 signal mux0_out, mux1_out: std_logic_vector(3 downto 0);
 signal reg0_out_50, reg1_out_50: std_logic_vector(49 downto 0);
@@ -117,8 +115,8 @@ signal interleave_out: std_logic_vector(7 downto 0);
 begin
 
 deint: deinterleave port map(ram_out, deinterleave_sig_r0, deinterleave_sig_r1);
-register0: reg0 port map(deinterleave_sig_r0, reg0_sig_13, res, clk, control(1 downto 0), reg0_out_rho0, reg0_out_50);
-register1: reg1 port map(deinterleave_sig_r1, reg1_sig_12, res, clk, control(1 downto 0), reg1_out_rho1, reg1_out_50);
+register0: reg0 port map(deinterleave_sig_r0, slice_out, res, clk, control(1 downto 0), reg0_out_rho0, reg0_out_50);
+register1: reg1 port map(deinterleave_sig_r1, slice_out, res, clk, control(1 downto 0), reg1_out_rho1, reg1_out_50);
 mux64_0: mux_64to4 port map(reg0_out_rho0, control(5 downto 2), rho0_in);
 mux64_1: mux_64to4 port map(reg1_out_rho1, control(9 downto 6), rho1_in);
 rho0: rho_unit port map(rho0_in, res, clk, control(17 downto 10), rho0_out);
@@ -128,6 +126,7 @@ mux1: mux4 port map(rho1_out, rho1_in, control(32), mux1_out);
 mux25: mux_100to25 port map(sig_100, control(27 downto 26), slice_in);
 slice: slice_unit port map(slice_in, res, clk, control(30), control(29), control(28), slice_out);
 inter: interleave port map(mux0_out, mux1_out, interleave_out);
+ram_in <= interleave_out;
 
 -- hardcoded sig_100 into slice3, slice2, slice1, slice0
 

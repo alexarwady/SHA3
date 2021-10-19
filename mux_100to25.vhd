@@ -15,7 +15,7 @@ end entity mux_100to25;
 architecture behavioral of mux_100to25 is 
 
 begin
-process(selector)
+process(selector, input)
 begin
     case selector is
         when "00" => output <= input(24 downto 0);

@@ -4,7 +4,8 @@ USE ieee.numeric_std.ALL;
 
 entity ram is
 port(
-    addr: in integer;
+    addr_w: in integer;
+    addr_r: in integer;
     input: in std_logic_vector(7 downto 0);
     we: in std_logic;
     clk: in std_logic;
@@ -89,10 +90,10 @@ process(clk)
     begin
     if(rising_edge(clk)) then
         if(we='1') then
-        RAM(addr) <= input;
+        RAM(addr_w) <= input;
         end if;
     end if;
 end process;
 
-output <= RAM(addr);
+output <= RAM(addr_r);
 end behavioral;
