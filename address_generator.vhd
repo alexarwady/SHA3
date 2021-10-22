@@ -25,10 +25,10 @@ p_clk: process (res, clk, mode)
       current <= 0;
       count <= 0;
     elsif(clk'event and clk ='1' and mode = '0' and count <=11) then
-      current <= (current + offset + 16) mod 200; -- 8 * offset + 128 (in bits)
+      current <= (current + 16) mod 200; -- 8 * offset + 128 (in bits)
       count <= count + 1;
     elsif(clk'event and clk ='1' and mode = '0' and count = 12) then
-      current <= 0;
+      current <= offset;
       count <= 0;
     elsif(clk'event and clk ='1' and mode = '1') then
       current <= current + 1;

@@ -51,9 +51,9 @@ p_clk: process (res, clk, mode)
       storedbits(19 - count) <= input2(7);
 
         if count = 1 then
-          storedbits(15) <= input2(0);
+          storedbits(13) <= input2(0);
         elsif count = 3 then
-          storedbits(14) <= input2(0);
+          storedbits(12) <= input2(0);
         end if;
       
       count <= count + 1 mod 4;
@@ -62,7 +62,7 @@ p_clk: process (res, clk, mode)
   end process p_clk;
 
   output1 <= storedbits;
-  output2 <= storedbits(63 downto 14);
+  output2 <= storedbits(63 downto 16) & storedbits(13 downto 12);
 
 end behavioral;
 

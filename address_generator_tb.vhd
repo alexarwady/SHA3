@@ -39,6 +39,12 @@ Tb_clkgen : process
      wait for 50 ns;
 end process Tb_clkgen;
 
+Tb_off : process
+  begin
+  wait for 1201 ns;
+  offset_sig <= offset_sig + 1;
+end process Tb_off;
+
 u1: address_generator port map(clk_sig, res_sig, mode_sig, offset_sig, output_sig);
 
 end behavioral;
