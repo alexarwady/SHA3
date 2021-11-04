@@ -27,6 +27,7 @@ begin
 -- mode 00: slice phase - reading from RAM
 -- mode 01: slice phase - wrtiting to RAM
 -- mode 10: rho phase
+-- mode 11: standby
 
 p_clk: process (res, clk, mode)
   begin

@@ -9,7 +9,7 @@ entity datapath is
     ram_in: out std_logic_vector(7 downto 0);
     clk: in std_logic;
     res: in std_logic;
-    control: in std_logic_vector(32 downto 0)
+    control: in std_logic_vector(33 downto 0)
     );
     
 end entity datapath;
@@ -61,7 +61,7 @@ component rho_unit is
     input : in std_logic_vector (3 downto 0);
     res : in std_logic;
     clk : in std_logic;
-    shift : in std_logic_vector (7 downto 0);
+    shift : in std_logic_vector (5 downto 0);
     output : out std_logic_vector (3 downto 0)
     );  
 end component;
@@ -82,6 +82,7 @@ component slice_unit is
     rc: in std_logic;
     bypass_pi_iota_chi: in std_logic;
     bypass_theta: in std_logic;
+    we_reg: in std_logic;
     output: out std_logic_vector (24 downto 0)
     );
 end component;
@@ -119,12 +120,12 @@ register0: reg0 port map(deinterleave_sig_r0, slice_out, res, clk, control(1 dow
 register1: reg1 port map(deinterleave_sig_r1, slice_out, res, clk, control(1 downto 0), reg1_out_rho1, reg1_out_50);
 mux64_0: mux_64to4 port map(reg0_out_rho0, control(5 downto 2), rho0_in);
 mux64_1: mux_64to4 port map(reg1_out_rho1, control(9 downto 6), rho1_in);
-rho0: rho_unit port map(rho0_in, res, clk, control(17 downto 10), rho0_out);
-rho1: rho_unit port map(rho1_in, res, clk, control(25 downto 18), rho1_out);
-mux0: mux4 port map(rho0_out, rho0_in, control(31), mux0_out);
-mux1: mux4 port map(rho1_out, rho1_in, control(32), mux1_out);
+rho0: rho_unit port map(rho0_in, res, clk, control(15 downto 10), rho0_out);
+rho1: rho_unit port map(rho1_in, res, clk, control(23 downto 18), rho1_out);
+mux0: mux4 port map(rho0_out, rho0_in, control(32), mux0_out);
+mux1: mux4 port map(rho1_out, rho1_in, control(33), mux1_out);
 mux25: mux_100to25 port map(sig_100, control(27 downto 26), slice_in);
-slice: slice_unit port map(slice_in, res, clk, control(30), control(29), control(28), slice_out);
+slice: slice_unit port map(slice_in, res, clk, control(31), control(30), control(29), control(28), slice_out);
 inter: interleave port map(mux0_out, mux1_out, interleave_out);
 ram_in <= interleave_out;
 

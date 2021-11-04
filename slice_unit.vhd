@@ -11,6 +11,7 @@ entity slice_unit is
     rc: in std_logic;
     bypass_pi_iota_chi: in std_logic;
     bypass_theta: in std_logic;
+    we_reg: in std_logic;
     output: out std_logic_vector (24 downto 0)
     );
     
@@ -59,6 +60,7 @@ component parity_reg is
     p_in : in std_logic_vector (4 downto 0);
     res : in std_logic;
     clk : in std_logic;
+    we: in std_logic;
     p_out : out std_logic_vector (4 downto 0)
     );
 end component;
@@ -98,7 +100,7 @@ u1: pi_unit port map(input, pi_out);
 u2: iota_chi_unit port map(pi_out, rc, iota_chi_out);
 mux1: mux25 port map(iota_chi_out, input, bypass_pi_iota_chi, mux1_out);
 u3: parity_unit port map(mux1_out, parity_out);
-u4: parity_reg port map(parity_out, res, clk, parity_reg_out);
+u4: parity_reg port map(parity_out, res, clk, we_reg, parity_reg_out);
 u5: left_shifter port map(parity_out, left_out);
 u6: right_shifter port map(parity_reg_out, right_out);
 temp <= left_out xor right_out;

@@ -45,14 +45,15 @@ Tb_clkgen : process
      wait for 50 ns;
 end process Tb_clkgen;
 
-input_sig <= "0101010101010010010100000", "1100010100100000100110010" after 100 ns;
+--input_sig <= "0101010101010010010100000", "1100010100100000100110010" after 100 ns;
 
 --input_sig <= "0110101100100101001010010";
 --input_sig <= "0101010101010010010100000";
 --input_sig <= "0100000001000010000010010";
+input_sig <= "0100100001010000101001010";
 rc_sig <= '0';
-bypass_pi_iota_chi_sig <= '1';
-bypass_theta_sig <= '0';
+bypass_pi_iota_chi_sig <= '0';
+bypass_theta_sig <= '1';
 
 u1: slice_unit port map(input_sig, res_sig, clk_sig, rc_sig, bypass_pi_iota_chi_sig, bypass_theta_sig, output_sig);
 

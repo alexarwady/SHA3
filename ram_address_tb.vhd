@@ -9,7 +9,6 @@ architecture behavioral of ram_address_tb is
 
 component ram is
 port(
-    addr_w: in integer;
     addr_r: in integer;
     input: in std_logic_vector(7 downto 0);
     we: in std_logic;
@@ -18,7 +17,7 @@ port(
 );
 end component;
 
-signal addr_r_sig, addr_w_sig: integer := 0;
+signal addr_r_sig: integer := 0;
 signal input_sig: std_logic_vector(7 downto 0) := "00000000";
 signal we_sig: std_logic := '0';
 signal clk_sig: std_logic;
@@ -40,7 +39,7 @@ Tb_addr : process
      wait for 100 ns;
 end process Tb_addr;
 
-ram1: ram port map(addr_w_sig, addr_r_sig, input_sig, we_sig, clk_sig, output_sig);
+ram1: ram port map(addr_r_sig, input_sig, we_sig, clk_sig, output_sig);
 
 --addr_r_sig <= 0, 1 after 100 ns, 2 after 200 ns;
 

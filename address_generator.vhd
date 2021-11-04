@@ -7,7 +7,7 @@ port(
     clk: in std_logic;
     res: in std_logic;
     mode: in std_logic; -- 0 for slice phase, 1 for rho phase
-    offset: in integer; --between 0 and 7
+    offset: in integer; --between 0 and 7 // 0 and 15 ?
     output: out integer
 );
 end address_generator;
