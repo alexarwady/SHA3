@@ -11,6 +11,7 @@ entity reg1 is
     res : in std_logic;
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
+    slice: in std_logic_vector(1 downto 0);
     output1 : out std_logic_vector (63 downto 0);
     output2 : out std_logic_vector (49 downto 0)
     );
@@ -61,10 +62,13 @@ p_clk: process (res, clk, mode)
       count <= count + 1 mod 4;
 
     end if;
+
+    if(slice = "00" or slice = "01") then output2 <= storedbits(63 downto 16) & storedbits(13 downto 12);
+    elsif(slice = "10" or slice = "11") then output2 <= storedbits(63 downto 14);
+    end if;
   end process p_clk;
 
   output1 <= storedbits;
-  output2 <= storedbits(63 downto 16) & storedbits(13 downto 12);
 
 end behavioral;
 
