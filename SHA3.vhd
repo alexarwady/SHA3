@@ -38,10 +38,10 @@ port(
     );
 end component;
 
-signal addr_r_sig: integer;
-signal ram_input_sig, ram_output_sig: std_logic_vector(7 downto 0);
-signal we_sig, clk_sig, res_sig: std_logic;
-signal control_out_sig: std_logic_vector(33 downto 0);
+signal addr_r_sig: integer := 0;
+signal ram_input_sig, ram_output_sig: std_logic_vector(7 downto 0) := (others => '0');
+signal we_sig, clk_sig, res_sig: std_logic := '0';
+signal control_out_sig: std_logic_vector(33 downto 0) := (others => '0');
 
 begin
 
@@ -51,7 +51,7 @@ data1: datapath port map(ram_output_sig, ram_input_sig, clk_sig, res_sig, contro
 
 Tb_res: process
 begin
-  wait for 100 ns;
+  wait for 101 ns;
   res_sig <= '1';
 end process Tb_res;
 

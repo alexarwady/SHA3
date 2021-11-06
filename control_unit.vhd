@@ -39,16 +39,17 @@ type state_type is (preamble_l, preamble_c, slice_l, slice_c, slice_w, rho_l, rh
 signal current_state: state_type := preamble_l;
 signal control_output: std_logic_vector(33 downto 0) := (others => '0');
 signal ram_we_sig: std_logic := '0';
+
 signal count: integer := 0; -- counter for load/store to RAM
 signal offset: integer := 15; -- counter for looping over slice/rho phase
 signal current: integer := 15; -- ram_out address
 signal round: integer := 0; -- counter for round (between 0 and 24 because of the implementation)
 signal slice: integer := 0; -- counter for slice phase
 signal slice_sig: integer :=0; -- slice number for RC bit generation
-signal rc_bit: std_logic; -- RC bit signal
-signal round_sig: integer;
-signal rho_constant0_sig, rho_constant1_sig: std_logic_vector (5 downto 0);
-signal mux_64_0, mux_64_1: std_logic_vector(3 downto 0);
+signal rc_bit: std_logic := '0'; -- RC bit signal
+signal round_sig: integer := 0;
+signal rho_constant0_sig, rho_constant1_sig: std_logic_vector (5 downto 0) := (others => '0');
+signal mux_64_0, mux_64_1: std_logic_vector(3 downto 0) := (others => '0');
 
 begin
 
@@ -72,6 +73,7 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     when preamble_c =>
     control_output(1 downto 0) <= "11";
     control_output(27 downto 26) <= "11";
+    control_output(30) <= '1';
     offset <= 0;
     count <= 0;
     current <= offset;
@@ -82,6 +84,7 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     -- load 4 slices
     when slice_l =>
     control_output(1 downto 0) <= "00";
+    control_output(30) <= '0';
     control_output(28) <= '1'; -- set we bit of parity register to 1
     if(clk'event and clk ='1' and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
@@ -129,6 +132,7 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
       count <= 0;
       offset <= offset + 1 mod 16;
       current <= offset + 1 mod 16;
+      ram_we_sig <= '0';
       current_state <= slice_l;
     elsif(clk'event and clk ='1' and count = 12 and res = '1' and offset = 15) then 
       count <= 0;
@@ -177,6 +181,7 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
       offset <= offset+1 mod 12;
       current <= (offset+1)*16;
       count <= 0;
+      ram_we_sig <= '0';
       current_state <= rho_l;
     elsif(clk'event and clk ='1' and count = 15 and offset = 11 and res = '1') then
       ram_we_sig <= '0';
@@ -195,7 +200,7 @@ end process;
 ram_out <= current;
 control_out <= control_output;
 ram_we <= ram_we_sig;
-slice_sig <= round*4 + slice;
+slice_sig <= offset*4 + slice; --offset or round (?)
 round_sig <= (round - 1) mod 24;
 
 rc: rc_bit_generator port map(round_sig, slice_sig, rc_bit);

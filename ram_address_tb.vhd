@@ -17,7 +17,7 @@ port(
 );
 end component;
 
-signal addr_r_sig: integer := 0;
+signal addr_r_sig: integer := 15;
 signal input_sig: std_logic_vector(7 downto 0) := "00000000";
 signal we_sig: std_logic := '0';
 signal clk_sig: std_logic;
@@ -35,8 +35,8 @@ end process Tb_clkgen;
 
 Tb_addr : process
   begin
-     addr_r_sig <= addr_r_sig + 1 mod 200;
      wait for 100 ns;
+     addr_r_sig <= addr_r_sig + 16 mod 200;
 end process Tb_addr;
 
 ram1: ram port map(addr_r_sig, input_sig, we_sig, clk_sig, output_sig);

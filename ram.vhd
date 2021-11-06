@@ -85,14 +85,18 @@ signal RAM: RAM_ARRAY :=(
    );
 
 begin
-process(clk)
+process(clk, addr_r, input, we, RAM)
     begin
     if(rising_edge(clk)) then
         if(we='1') then
         RAM(addr_r) <= input;
         end if;
     end if;
+    if(addr_r <0 or addr_r >199) then
+    output <= RAM(15);
+    else output <= RAM(addr_r);
+    end if;
 end process;
 
-output <= RAM(addr_r);
+
 end behavioral;

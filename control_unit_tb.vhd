@@ -17,10 +17,10 @@ component control_unit is
     );
 end component;
 
-signal clk_sig, ram_we_sig: std_logic;
+signal clk_sig, ram_we_sig: std_logic := '0';
 signal res_sig: std_logic := '0';
-signal control_out_sig: std_logic_vector(33 downto 0);
-signal ram_out_sig: integer;
+signal control_out_sig: std_logic_vector(33 downto 0) := (others => '0');
+signal ram_out_sig: integer := 0;
 
 begin
 
@@ -38,6 +38,6 @@ Tb_clkgen : process
      wait for 50 ns;
 end process Tb_clkgen;
 
-u1: control_unit port map(clk_sig, res_sig, control_out_sig, ram_we_sig, ram_out_sig);
+u1: control_unit port map(clk => clk_sig, res => res_sig, control_out => control_out_sig, ram_we => ram_we_sig, ram_out => ram_out_sig);
 
 end behavioral;
