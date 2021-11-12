@@ -111,7 +111,7 @@ signal rho0_out, rho1_out, rho0_in, rho1_in: std_logic_vector(3 downto 0);
 signal mux0_out, mux1_out: std_logic_vector(3 downto 0);
 signal reg0_out_50, reg1_out_50: std_logic_vector(49 downto 0);
 signal slice_in, slice_out: std_logic_vector(24 downto 0);
-signal sig_100: std_logic_vector(99 downto 0);
+signal sig_100: std_logic_vector(99 downto 0) := (others => '0');
 signal reg0_out_rho0, reg1_out_rho1: std_logic_vector(63 downto 0);
 signal interleave_out: std_logic_vector(7 downto 0);
 
@@ -132,7 +132,10 @@ inter: interleave port map(mux0_out, mux1_out, interleave_out);
 ram_in <= interleave_out;
 
 -- hardcoded sig_100 into slice3, slice2, slice1, slice0
+p_clk: process (res, clk, control, sig_100)
+begin
 
+if(control(25) = '1') then
 sig_100(99) <= reg0_out_50(37);     sig_100(74) <= reg0_out_50(36);     sig_100(49) <= reg0_out_50(35);     sig_100(24) <= reg0_out_50(34);
 sig_100(98) <= reg1_out_50(49);     sig_100(73) <= reg1_out_50(48);     sig_100(48) <= reg1_out_50(47);     sig_100(23) <= reg1_out_50(46);
 sig_100(97) <= reg0_out_50(9);      sig_100(72) <= reg0_out_50(8);      sig_100(47) <= reg0_out_50(7);      sig_100(22) <= reg0_out_50(6);
@@ -158,5 +161,7 @@ sig_100(78) <= reg0_out_50(45);     sig_100(53) <= reg0_out_50(44);     sig_100(
 sig_100(77) <= reg1_out_50(9);      sig_100(52) <= reg1_out_50(8);      sig_100(27) <= reg1_out_50(7);      sig_100(2) <= reg1_out_50(6);
 sig_100(76) <= reg0_out_50(17);     sig_100(51) <= reg0_out_50(16);     sig_100(26) <= reg0_out_50(15);     sig_100(1) <= reg0_out_50(14);
 sig_100(75) <= reg1_out_50(1);      sig_100(50) <= reg0_out_50(1);      sig_100(25) <= reg1_out_50(0);      sig_100(0) <= reg0_out_50(0);
+end if;
+end process;
 
 end behavioral;

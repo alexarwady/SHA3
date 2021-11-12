@@ -53,20 +53,21 @@ signal mux_64_0, mux_64_1: std_logic_vector(3 downto 0) := (others => '0');
 
 begin
 
-comb_logic: process(clk, res, current_state, current, count, offset, control_output, round, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1)
+comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, control_output, round, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1, slice, ram_we_sig)
   begin
     case current_state is
 
     -- load last 4 slices
     when preamble_l =>
-    if(clk'event and clk ='1' and count<=10 and res = '1') then
+    if(rising_edge(clk) and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 11 and res = '1') then
+    elsif(rising_edge(clk) and count = 11 and res = '1') then
       current <= 192 + integer(floor(real(offset)/2.0)) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 12 and res = '1') then
+    elsif(rising_edge(clk) and count = 12 and res = '1') then
       current_state <= preamble_c;
+      control_output(25) <= '1';
     end if;
 
     -- perform one slice unit cycle for parity register of slice 63
@@ -77,8 +78,9 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     offset <= 0;
     count <= 0;
     current <= offset;
-    if(clk'event and clk ='1' and res = '1') then
+    if(rising_edge(clk) and res = '1') then
       current_state <= slice_l;
+      control_output(25) <= '0';
     end if;
 
     -- load 4 slices
@@ -86,29 +88,37 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     control_output(1 downto 0) <= "00";
     control_output(30) <= '0';
     control_output(28) <= '1'; -- set we bit of parity register to 1
-    if(clk'event and clk ='1' and count<=10 and res = '1') then
+    if(rising_edge(clk) and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 11 and res = '1') then
+    elsif(rising_edge(clk) and count = 11 and res = '1') then
       current <= 192 + integer(floor(real(offset)/2.0)) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 12 and res = '1') then
+    elsif(rising_edge(clk) and count = 12 and res = '1') then
       current_state <= slice_c;
+      control_output(25) <= '1';
+      control_output(28) <= '0';
+      control_output(1 downto 0) <= "01";
     end if;
 
     -- perform slice unit on the four slices
     when slice_c =>
-    control_output(1 downto 0) <= "01";
+    --control_output(1 downto 0) <= "01";
     control_output(31) <= rc_bit;
+    control_output(27 downto 26) <= std_logic_vector(to_unsigned((slice) mod 5, 2));
+
     if(round = 0) then control_output(30) <= '1'; -- bypass pi/iota/chi transformations on round 0
     elsif(round = 24) then control_output(29) <= '1'; -- bypass theta transformations on round 24
     else control_output(30 downto 29) <= "00";
     end if;
-    control_output(28) <= '0';
-    control_output(27 downto 26) <= std_logic_vector(to_unsigned(slice, 2));
-    if(clk'event and clk ='1' and slice<=2 and res = '1') then
+
+    if(rising_edge(clk) and slice=0 and res = '1') then
+      control_output(1 downto 0) <= "01";
+      control_output(25) <= '0';
       slice <= (slice + 1) mod 4;
-    elsif(clk'event and clk ='1' and slice =3 and res = '1') then
+    elsif(rising_edge(clk) and slice<=2 and res = '1') then
+      slice <= (slice + 1) mod 4;
+    elsif(rising_edge(clk) and slice =3 and res = '1') then
       current_state <= slice_w;
       slice <= (slice + 1) mod 4;
       count <= 0;
@@ -119,22 +129,22 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     when slice_w =>
     control_output(1 downto 0) <= "11"; -- reg0 and reg1 on standby
     control_output(33 downto 32) <= "11"; -- bypass rho
-    control_output(5 downto 2) <= std_logic_vector(to_unsigned(count+3, 4)); -- set the mux64 to the correct value
-    control_output(9 downto 6) <= std_logic_vector(to_unsigned(count+3, 4)); -- set the mux64 to the correct value
+    control_output(5 downto 2) <= std_logic_vector(to_unsigned(15-count, 4)); -- set the mux64 to the correct value
+    control_output(9 downto 6) <= std_logic_vector(to_unsigned(15-count, 4)); -- set the mux64 to the correct value
     ram_we_sig <= '1'; -- set ram we signal to 1 so we write in RAM instead of reading
-    if(clk'event and clk ='1' and count<=10 and res = '1') then
+    if(rising_edge(clk) and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 11 and res = '1') then
+    elsif(rising_edge(clk) and count = 11 and res = '1') then
       current <= 192 + integer(floor(real(offset)/2.0)) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 12 and res = '1' and offset <15) then -- repeat slice phase on next slices
+    elsif(rising_edge(clk) and count = 12 and res = '1' and offset <15) then -- repeat slice phase on next slices
       count <= 0;
       offset <= offset + 1 mod 16;
       current <= offset + 1 mod 16;
       ram_we_sig <= '0';
       current_state <= slice_l;
-    elsif(clk'event and clk ='1' and count = 12 and res = '1' and offset = 15) then 
+    elsif(rising_edge(clk) and count = 12 and res = '1' and offset = 15) then 
       count <= 0;
       offset <= 0;
       current <= 0;
@@ -145,10 +155,10 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     when rho_l => 
     ram_we_sig <= '0';
     control_output(1 downto 0) <= "10";
-    if(clk'event and clk ='1' and count<=14 and res = '1') then
+    if(rising_edge(clk) and count<=14 and res = '1') then
       current <= (current + 1) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 15 and res = '1') then
+    elsif(rising_edge(clk) and count = 15 and res = '1') then
       current_state <= rho_c;
     end if;
 
@@ -162,7 +172,7 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     control_output(33 downto 32) <= "00";
     count <= 0;
     current <= 16*offset;
-    if(clk'event and clk ='1' and res = '1') then
+    if(rising_edge(clk) and res = '1') then
       current_state <= rho_w;
     end if;
 
@@ -174,16 +184,16 @@ comb_logic: process(clk, res, current_state, current, count, offset, control_out
     control_output(15 downto 10) <= rho_constant0_sig;
     control_output(23 downto 18) <= rho_constant1_sig;
     control_output(33 downto 32) <= "00";
-    if(clk'event and clk ='1' and count<=14 and res = '1') then
+    if(rising_edge(clk) and count<=14 and res = '1') then
       current <= (current + 1) mod 200;
       count <= count + 1;
-    elsif(clk'event and clk ='1' and count = 15 and offset <= 10 and res = '1') then
+    elsif(rising_edge(clk) and count = 15 and offset <= 10 and res = '1') then
       offset <= offset+1 mod 12;
       current <= (offset+1)*16;
       count <= 0;
       ram_we_sig <= '0';
       current_state <= rho_l;
-    elsif(clk'event and clk ='1' and count = 15 and offset = 11 and res = '1') then
+    elsif(rising_edge(clk) and count = 15 and offset = 11 and res = '1') then
       ram_we_sig <= '0';
       count <= 0;
       offset <= 0;

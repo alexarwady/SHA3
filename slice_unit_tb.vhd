@@ -16,6 +16,7 @@ component slice_unit is
     rc: in std_logic;
     bypass_pi_iota_chi: in std_logic;
     bypass_theta: in std_logic;
+    we_reg: in std_logic;
     output: out std_logic_vector (24 downto 0)
     );
     
@@ -25,6 +26,7 @@ signal input_sig: std_logic_vector (24 downto 0);
 signal res_sig: std_logic := '0';
 signal clk_sig: std_logic;
 signal rc_sig: std_logic;
+signal we_reg_sig: std_logic := '0';
 signal bypass_pi_iota_chi_sig: std_logic;
 signal bypass_theta_sig: std_logic;
 signal output_sig: std_logic_vector (24 downto 0);
@@ -50,11 +52,13 @@ end process Tb_clkgen;
 --input_sig <= "0110101100100101001010010";
 --input_sig <= "0101010101010010010100000";
 --input_sig <= "0100000001000010000010010";
-input_sig <= "0100100001010000101001010";
-rc_sig <= '0';
-bypass_pi_iota_chi_sig <= '0';
-bypass_theta_sig <= '1';
+--input_sig <= "0100100001010000101001010";
 
-u1: slice_unit port map(input_sig, res_sig, clk_sig, rc_sig, bypass_pi_iota_chi_sig, bypass_theta_sig, output_sig);
+input_sig <= "0000000000000000111111111", "0000000000000000111111111" after 100 ns, "0000000000000000111111111" after 200 ns, "0000000000000000000000000" after 300 ns, "0000000000000000000000000" after 400 ns;
+rc_sig <= '0';
+bypass_pi_iota_chi_sig <= '1';
+bypass_theta_sig <= '0';
+
+u1: slice_unit port map(input_sig, res_sig, clk_sig, rc_sig, bypass_pi_iota_chi_sig, bypass_theta_sig, we_reg_sig, output_sig);
 
 end behavioral;

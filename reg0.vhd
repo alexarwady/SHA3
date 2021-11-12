@@ -20,7 +20,8 @@ end entity reg0;
 architecture behavioral of reg0 is
 
 signal storedbits: std_logic_vector(63 downto 0);
-signal count: integer := 0;
+signal count: integer := 3;
+signal temp: std_logic_vector(49 downto 0);
 
 begin
 
@@ -29,11 +30,11 @@ begin
 -- mode 10: rho phase
 -- mode 11: standby
 
-p_clk: process (res, clk, mode)
+p_clk: process (res, clk, mode, slice, temp, storedbits, input1, input2, count)
   begin
     if res='0' then          
       storedbits <= (others => '0');
-      count <= 0;
+      count <= 3;
     elsif mode = "10" and clk'event and clk ='1' then 
       storedbits <= storedbits(59 downto 0) & input1;
     elsif mode = "00" and clk'event and clk ='1' then
@@ -52,21 +53,22 @@ p_clk: process (res, clk, mode)
       storedbits(23 - count) <= input2(22);
       storedbits(19 - count) <= input2(7);
 
-        if count = 1 then
-          storedbits(13) <= input2(0);
-        elsif count = 3 then
+        if count = 3 then
           storedbits(12) <= input2(0);
+        elsif count = 1 then
+          storedbits(13) <= input2(0);
         end if;
       
-      count <= count + 1 mod 4;
+      count <= (count - 1) mod 4;
 
     end if;
 
-    if(slice = "00" or slice = "01") then output2 <= storedbits(63 downto 16) & storedbits(13 downto 12);
-    elsif(slice = "10" or slice = "11") then output2 <= storedbits(63 downto 14);
+    if(slice = "00" or slice = "01") then temp <= storedbits(63 downto 16) & storedbits(13 downto 12);
+    elsif(slice = "10" or slice = "11") then temp <= storedbits(63 downto 14);
     end if;
   end process p_clk;
 
+  output2 <= temp;
   output1 <= storedbits;
 
 end behavioral;
