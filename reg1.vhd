@@ -53,18 +53,22 @@ p_clk: process (res, clk, mode, slice, temp, storedbits, input1, input2, count)
       storedbits(23 - count) <= input2(2);
       storedbits(19 - count) <= input2(12);
 
-        if count = 2 then
+        if count = 2 and slice = "00" then
           storedbits(12) <= input2(0);
-        elsif count = 0 then
+        elsif count = 2 and slice = "01" then
+          storedbits(14) <= input2(0);
+        elsif count = 0  and slice = "00" then
           storedbits(13) <= input2(0);
+        elsif count = 0 and slice = "01" then
+          storedbits(15) <= input2(0);
         end if;
       
       count <= (count - 1) mod 4;
 
     end if;
 
-    if(slice = "00" or slice = "01") then temp <= storedbits(63 downto 16) & storedbits(13 downto 12);
-    elsif(slice = "10" or slice = "11") then temp <= storedbits(63 downto 14);
+    if(slice = "00") then temp <= storedbits(63 downto 16) & storedbits(13 downto 12);
+    elsif(slice = "01") then temp <= storedbits(63 downto 14);
     end if;
   end process p_clk;
 

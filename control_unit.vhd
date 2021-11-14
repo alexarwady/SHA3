@@ -59,12 +59,14 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
 
     -- load last 4 slices
     when preamble_l =>
+    control_output(1 downto 0) <= "00";
     if(rising_edge(clk) and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
       count <= count + 1;
     elsif(rising_edge(clk) and count = 11 and res = '1') then
       current <= 192 + integer(floor(real(offset)/2.0)) mod 200;
       count <= count + 1;
+      control_output(17 downto 16) <= "01";
     elsif(rising_edge(clk) and count = 12 and res = '1') then
       current_state <= preamble_c;
       control_output(25) <= '1';
@@ -105,7 +107,8 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
     when slice_c =>
     --control_output(1 downto 0) <= "01";
     control_output(31) <= rc_bit;
-    control_output(27 downto 26) <= std_logic_vector(to_unsigned((slice) mod 5, 2));
+    control_output(27 downto 26) <= std_logic_vector(to_unsigned((slice) mod 4, 2));
+    control_output(17 downto 16) <= std_logic_vector(to_unsigned((offset) mod 2, 2));
 
     if(round = 0) then control_output(30) <= '1'; -- bypass pi/iota/chi transformations on round 0
     elsif(round = 24) then control_output(29) <= '1'; -- bypass theta transformations on round 24
@@ -196,8 +199,8 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
     elsif(rising_edge(clk) and count = 15 and offset = 11 and res = '1') then
       ram_we_sig <= '0';
       count <= 0;
-      offset <= 0;
-      current <= 0;
+      offset <= 15;
+      current <= 15;
       round <= round + 1;
       current_state <= preamble_l;
     end if;
