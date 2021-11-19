@@ -76,13 +76,21 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
     when preamble_c =>
     control_output(1 downto 0) <= "11";
     control_output(27 downto 26) <= "11";
+    slice <= 3;
+    if(round = 0) then 
     control_output(30) <= '1';
-    offset <= 0;
+    else 
+    control_output(30) <= '0';
+    control_output(31) <= rc_bit;
+    end if;
+    offset <= 15;
     count <= 0;
-    current <= offset;
     if(rising_edge(clk) and res = '1') then
       current_state <= slice_l;
+      offset <= 0;
+      current <= 0;
       control_output(25) <= '0';
+      slice <= 0;
     end if;
 
     -- load 4 slices
@@ -182,8 +190,8 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
     -- write 2 lanes to RAM
     when rho_w =>
     ram_we_sig <= '1';
-    control_output(5 downto 2) <= std_logic_vector(to_unsigned(to_integer(unsigned((mux_64_0)) + count + 1) mod 16, 4));
-    control_output(9 downto 6) <= std_logic_vector(to_unsigned(to_integer(unsigned((mux_64_1)) + count + 1) mod 16, 4));
+    control_output(5 downto 2) <= std_logic_vector(to_unsigned(to_integer(unsigned((mux_64_0)) - count - 1) mod 16, 4));
+    control_output(9 downto 6) <= std_logic_vector(to_unsigned(to_integer(unsigned((mux_64_1)) - count - 1) mod 16, 4));
     control_output(15 downto 10) <= rho_constant0_sig;
     control_output(23 downto 18) <= rho_constant1_sig;
     control_output(33 downto 32) <= "00";
