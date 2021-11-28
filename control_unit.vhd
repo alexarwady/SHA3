@@ -8,6 +8,10 @@ entity control_unit is
   port (
     clk: in std_logic;
     res: in std_logic;
+    state_in: in std_logic_vector(1599 downto 0);
+    output_ram: in std_logic_vector(7 downto 0);
+    state_out: out std_logic_vector(1599 downto 0);
+    input_ram: out std_logic_vector(7 downto 0);
     control_out: out std_logic_vector(33 downto 0);
     ram_we: out std_logic;
     ram_out: out integer
@@ -35,8 +39,8 @@ component rho_constant_generator is
     );
 end component;
 
-type state_type is (preamble_l, preamble_c, slice_l, slice_c, slice_w, rho_l, rho_c, rho_w);
-signal current_state: state_type := preamble_l;
+type state_type is (preamble_l, preamble_c, slice_l, slice_c, slice_w, rho_l, rho_c, rho_w, state_w, state_r);
+signal current_state: state_type := state_w;
 signal control_output: std_logic_vector(33 downto 0) := (others => '0');
 signal ram_we_sig: std_logic := '0';
 
@@ -50,12 +54,32 @@ signal rc_bit: std_logic := '0'; -- RC bit signal
 signal round_sig: integer := 0;
 signal rho_constant0_sig, rho_constant1_sig: std_logic_vector (5 downto 0) := (others => '0');
 signal mux_64_0, mux_64_1: std_logic_vector(3 downto 0) := (others => '0');
+signal i: integer := 0;
+signal input_ram_sig: std_logic_vector(7 downto 0):= (others => '0');
+signal state_out_sig: std_logic_vector(1599 downto 0):= (others => '0');
 
 begin
 
-comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, control_output, round, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1, slice, ram_we_sig)
+comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, count, offset, control_output, round, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1, slice, ram_we_sig)
   begin
     case current_state is
+
+    -- write state to RAM
+    when state_w =>
+    ram_we_sig <= '1';
+    current <= i;
+    control_output(24) <= '1';
+    input_ram_sig <= state_in((i*8+7) downto (i*8));
+    if(rising_edge(clk) and i<199 and res = '1') then
+      i <= (i + 1) mod 200;
+    elsif(rising_edge(clk) and i=199 and res = '1') then
+      ram_we_sig <= '0';
+      current <= 15;
+      count <= 0;
+      offset <= 15;
+      control_output <= (others => '0');
+      current_state <= preamble_l;
+    end if;
 
     -- load last 4 slices
     when preamble_l =>
@@ -155,11 +179,14 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
       current <= offset + 1 mod 16;
       ram_we_sig <= '0';
       current_state <= slice_l;
-    elsif(rising_edge(clk) and count = 12 and res = '1' and offset = 15) then 
+    elsif(rising_edge(clk) and count = 12 and res = '1' and offset = 15 and round /=24) then 
       count <= 0;
       offset <= 0;
       current <= 0;
       current_state <= rho_l;
+    elsif(rising_edge(clk) and count = 12 and res = '1' and offset = 15 and round = 24) then 
+      i <= 0;
+      current_state <= state_r;
     end if;
 
     -- load 2 lanes from RAM
@@ -213,6 +240,19 @@ comb_logic: process(clk, res, rc_bit, current_state, current, count, offset, con
       current_state <= preamble_l;
     end if;
 
+    -- write state to RAM
+    when state_r =>
+    current <= i;
+    ram_we_sig <= '0';
+    state_out_sig((i*8+7) downto (i*8)) <= output_ram;
+    if(rising_edge(clk) and i<199 and res = '1') then
+      i <= (i + 1) mod 200;
+    elsif(rising_edge(clk) and i=199 and res = '1') then
+      i <= 0;
+      round <= 0;
+      current_state <= state_w;
+    end if;
+
     when others => current_state <= preamble_l;
 
   end case;
@@ -221,8 +261,10 @@ end process;
 ram_out <= current;
 control_out <= control_output;
 ram_we <= ram_we_sig;
-slice_sig <= offset*4 + slice; --offset or round (?)
+slice_sig <= offset*4 + slice;
 round_sig <= (round - 1) mod 24;
+input_ram <= input_ram_sig;
+state_out <= state_out_sig;
 
 rc: rc_bit_generator port map(round_sig, slice_sig, rc_bit);
 rho_constant: rho_constant_generator port map(offset, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1);

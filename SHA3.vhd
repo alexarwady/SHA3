@@ -4,6 +4,12 @@ use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 entity sha3 is
+  port (
+    clk: in std_logic;
+    res: in std_logic;
+    pt: in std_logic_vector(1599 downto 0);
+    ct: out std_logic_vector(1599 downto 0)
+  );
 end entity sha3;
 
 architecture behavioral of sha3 is
@@ -22,6 +28,10 @@ component control_unit is
   port (
     clk: in std_logic;
     res: in std_logic;
+    state_in: in std_logic_vector(1599 downto 0);
+    output_ram: in std_logic_vector(7 downto 0);
+    state_out: out std_logic_vector(1599 downto 0);
+    input_ram: out std_logic_vector(7 downto 0);
     control_out: out std_logic_vector(33 downto 0);
     ram_we: out std_logic;
     ram_out: out integer
@@ -38,30 +48,26 @@ port(
     );
 end component;
 
+component mux8 is
+  port ( 
+    input1 : in  std_logic_vector(7 downto 0);
+    input2 : in  std_logic_vector(7 downto 0);
+    selector  : in std_logic;
+    output : out std_logic_vector(7 downto 0)
+    );
+end component;
+
 signal addr_r_sig: integer := 0;
-signal ram_input_sig, ram_output_sig: std_logic_vector(7 downto 0) := (others => '0');
-signal we_sig, clk_sig, res_sig: std_logic := '0';
+signal ram_input_sig, ram_output_sig, write_ram, write_ram_in: std_logic_vector(7 downto 0) := (others => '0');
+signal we_sig: std_logic := '0';
 signal control_out_sig: std_logic_vector(33 downto 0) := (others => '0');
 
 begin
 
-ctrl1: control_unit port map(clk_sig, res_sig, control_out_sig, we_sig, addr_r_sig);
-ram1: ram port map(addr_r_sig, ram_input_sig, we_sig, clk_sig, ram_output_sig);
-data1: datapath port map(ram_output_sig, ram_input_sig, clk_sig, res_sig, control_out_sig);
-
-Tb_res: process
-begin
-  wait for 101 ns;
-  res_sig <= '1';
-end process Tb_res;
-
-Tb_clkgen : process
-  begin
-     clk_sig <= '1';
-     wait for 50 ns;
-     clk_sig <= '0';
-     wait for 50 ns;
-end process Tb_clkgen;
+ctrl1: control_unit port map(clk, res, pt, ram_output_sig, ct, write_ram, control_out_sig, we_sig, addr_r_sig);
+mux1: mux8 port map(ram_input_sig, write_ram, control_out_sig(24), write_ram_in);
+ram1: ram port map(addr_r_sig, write_ram_in, we_sig, clk, ram_output_sig);
+data1: datapath port map(ram_output_sig, ram_input_sig, clk, res, control_out_sig);
 
 end behavioral;
 
