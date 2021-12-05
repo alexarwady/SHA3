@@ -92,6 +92,8 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
       count <= count + 1;
       control_output(17 downto 16) <= "01";
     elsif(rising_edge(clk) and count = 12 and res = '1') then
+      count <= count + 1;
+    elsif(rising_edge(clk) and count = 13 and res = '1') then
       current_state <= preamble_c;
       control_output(25) <= '1';
     end if;
@@ -129,6 +131,8 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
       current <= 192 + integer(floor(real(offset)/2.0)) mod 200;
       count <= count + 1;
     elsif(rising_edge(clk) and count = 12 and res = '1') then
+      count <= count + 1;
+    elsif(rising_edge(clk) and count = 13 and res = '1') then
       current_state <= slice_c;
       control_output(25) <= '1';
       control_output(28) <= '0';
@@ -155,6 +159,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
       slice <= (slice + 1) mod 4;
     elsif(rising_edge(clk) and slice =3 and res = '1') then
       current_state <= slice_w;
+      ram_we_sig <= '1';
       slice <= (slice + 1) mod 4;
       count <= 0;
       current <= offset;
@@ -165,8 +170,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
     control_output(1 downto 0) <= "11"; -- reg0 and reg1 on standby
     control_output(33 downto 32) <= "11"; -- bypass rho
     control_output(5 downto 2) <= std_logic_vector(to_unsigned(15-count, 4)); -- set the mux64 to the correct value
-    control_output(9 downto 6) <= std_logic_vector(to_unsigned(15-count, 4)); -- set the mux64 to the correct value
-    ram_we_sig <= '1'; -- set ram we signal to 1 so we write in RAM instead of reading
+    control_output(9 downto 6) <= std_logic_vector(to_unsigned(15-count, 4)); -- set the mux64 to the correct value -- set ram we signal to 1 so we write in RAM instead of reading
     if(rising_edge(clk) and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
       count <= count + 1;
@@ -185,7 +189,13 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
       current <= 0;
       current_state <= rho_l;
     elsif(rising_edge(clk) and count = 12 and res = '1' and offset = 15 and round = 24) then 
+      count <= count + 1;
       i <= 0;
+      current <= 0;
+      ram_we_sig <= '0';
+    elsif(rising_edge(clk) and count = 13 and res = '1' and offset = 15 and round = 24) then
+      i <= 1;
+      current <= 1;
       current_state <= state_r;
     end if;
 
@@ -197,6 +207,8 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
       current <= (current + 1) mod 200;
       count <= count + 1;
     elsif(rising_edge(clk) and count = 15 and res = '1') then
+      count <= count + 1;
+    elsif(rising_edge(clk) and count = 16 and res = '1') then
       current_state <= rho_c;
     end if;
 
@@ -244,10 +256,10 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
     when state_r =>
     current <= i;
     ram_we_sig <= '0';
-    state_out_sig((i*8+7) downto (i*8)) <= output_ram;
-    if(rising_edge(clk) and i<199 and res = '1') then
-      i <= (i + 1) mod 200;
-    elsif(rising_edge(clk) and i=199 and res = '1') then
+    state_out_sig(((i-1)*8+7) downto ((i-1)*8)) <= output_ram;
+    if(rising_edge(clk) and i<200 and res = '1') then
+      i <= (i + 1) mod 201;
+    elsif(rising_edge(clk) and i=200 and res = '1') then
       i <= 0;
       round <= 0;
       current_state <= state_w;

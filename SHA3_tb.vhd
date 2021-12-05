@@ -76,7 +76,7 @@ begin
         hread(vec_line, vec_ct);
         ct <= vec_ct;
 
-        wait for 2225400 ns;
+        wait for 2296800 ns;
 
         if (ct_int_true /= ct_int) then
           assert false report "invalid ciphertext" severity failure;
