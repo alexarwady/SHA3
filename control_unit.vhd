@@ -12,9 +12,9 @@ entity control_unit is
     output_ram: in std_logic_vector(7 downto 0);
     state_out: out std_logic_vector(1599 downto 0);
     input_ram: out std_logic_vector(7 downto 0);
-    control_out: out std_logic_vector(33 downto 0);
+    control_out: out std_logic_vector(34 downto 0);
     ram_we: out std_logic;
-    ram_out: out integer
+    ram_out: out std_logic_vector(7 downto 0)
     );
     
 end entity control_unit;
@@ -41,7 +41,7 @@ end component;
 
 type state_type is (preamble_l, preamble_c, slice_l, slice_c, slice_w, rho_l, rho_c, rho_w, state_w, state_r);
 signal current_state: state_type := state_w;
-signal control_output: std_logic_vector(33 downto 0) := (others => '0');
+signal control_output: std_logic_vector(34 downto 0) := (others => '0');
 signal ram_we_sig: std_logic := '0';
 
 signal count: integer := 0; -- counter for load/store to RAM
@@ -69,6 +69,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
     ram_we_sig <= '1';
     current <= i;
     control_output(24) <= '1';
+    control_output(34) <= '1';
     input_ram_sig <= state_in((i*8+7) downto (i*8));
     if(rising_edge(clk) and i<199 and res = '1') then
       i <= (i + 1) mod 200;
@@ -83,6 +84,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- load last 4 slices
     when preamble_l =>
+    control_output(34) <= '1';
     control_output(1 downto 0) <= "00";
     if(rising_edge(clk) and count<=10 and res = '1') then
       current <= (current + 16) mod 200;
@@ -100,6 +102,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- perform one slice unit cycle for parity register of slice 63
     when preamble_c =>
+    control_output(34) <= '0';
     control_output(1 downto 0) <= "11";
     control_output(27 downto 26) <= "11";
     slice <= 3;
@@ -121,6 +124,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- load 4 slices
     when slice_l =>
+    control_output(34) <= '1';
     control_output(1 downto 0) <= "00";
     control_output(30) <= '0';
     control_output(28) <= '1'; -- set we bit of parity register to 1
@@ -141,7 +145,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- perform slice unit on the four slices
     when slice_c =>
-    --control_output(1 downto 0) <= "01";
+    control_output(34) <= '0';
     control_output(31) <= rc_bit;
     control_output(27 downto 26) <= std_logic_vector(to_unsigned((slice) mod 4, 2));
     control_output(17 downto 16) <= std_logic_vector(to_unsigned((offset) mod 2, 2));
@@ -167,6 +171,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- write 4 slices to RAM
     when slice_w =>
+    control_output(34) <= '1';
     control_output(1 downto 0) <= "11"; -- reg0 and reg1 on standby
     control_output(33 downto 32) <= "11"; -- bypass rho
     control_output(5 downto 2) <= std_logic_vector(to_unsigned(15-count, 4)); -- set the mux64 to the correct value
@@ -201,6 +206,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- load 2 lanes from RAM
     when rho_l => 
+    control_output(34) <= '1';
     ram_we_sig <= '0';
     control_output(1 downto 0) <= "10";
     if(rising_edge(clk) and count<=14 and res = '1') then
@@ -214,6 +220,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- store first 4 nibbles in rho unit register
     when rho_c =>
+    control_output(34) <= '0';
     control_output(1 downto 0) <= "11";
     control_output(5 downto 2) <= mux_64_0;
     control_output(9 downto 6) <= mux_64_1;
@@ -228,6 +235,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- write 2 lanes to RAM
     when rho_w =>
+    control_output(34) <= '1';
     ram_we_sig <= '1';
     control_output(5 downto 2) <= std_logic_vector(to_unsigned(to_integer(unsigned((mux_64_0)) - count - 1) mod 16, 4));
     control_output(9 downto 6) <= std_logic_vector(to_unsigned(to_integer(unsigned((mux_64_1)) - count - 1) mod 16, 4));
@@ -254,6 +262,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
 
     -- write state to RAM
     when state_r =>
+    control_output(34) <= '1';
     current <= i;
     ram_we_sig <= '0';
     state_out_sig(((i-1)*8+7) downto ((i-1)*8)) <= output_ram;
@@ -270,7 +279,7 @@ comb_logic: process(clk, i, res, input_ram_sig, rc_bit, current_state, current, 
   end case;
 end process;
 
-ram_out <= current;
+ram_out <= std_logic_vector(to_unsigned(current, 8));
 control_out <= control_output;
 ram_we <= ram_we_sig;
 slice_sig <= offset*4 + slice;

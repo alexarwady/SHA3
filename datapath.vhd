@@ -9,7 +9,7 @@ entity datapath is
     ram_in: out std_logic_vector(7 downto 0);
     clk: in std_logic;
     res: in std_logic;
-    control: in std_logic_vector(33 downto 0)
+    control: in std_logic_vector(34 downto 0)
     );
     
 end entity datapath;

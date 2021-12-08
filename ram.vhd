@@ -4,10 +4,11 @@ USE ieee.numeric_std.ALL;
 
 entity ram is
 port(
-    addr_r: in integer;
+    addr_r: in std_logic_vector(7 downto 0);
     input: in std_logic_vector(7 downto 0);
     we: in std_logic;
     clk: in std_logic;
+    chipselect: in std_logic;
     output: out std_logic_vector(7 downto 0)
 );
 end ram;
@@ -87,11 +88,11 @@ signal RAM: RAM_ARRAY :=(
 begin
 process(clk, addr_r, input, we, RAM)
     begin
-    if(rising_edge(clk)) then
-        if(we='1') then RAM(addr_r) <= input;
+    if(rising_edge(clk) and chipselect = '1') then
+        if(we='1') then RAM(to_integer(unsigned(addr_r))) <= input;
         end if;
-        if((addr_r <0 or addr_r >199)) then output <= RAM(15);
-        else output <= RAM(addr_r);
+        if((to_integer(unsigned(addr_r)) <0 or to_integer(unsigned(addr_r)) >199)) then output <= RAM(15);
+        else output <= RAM(to_integer(unsigned(addr_r)));
         end if;
     end if;
 end process;
