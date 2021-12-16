@@ -9,7 +9,7 @@ entity datapath is
     ram_in: out std_logic_vector(7 downto 0);
     clk: in std_logic;
     res: in std_logic;
-    control: in std_logic_vector(34 downto 0)
+    control: in std_logic_vector(36 downto 0)
     );
     
 end entity datapath;
@@ -32,6 +32,7 @@ component reg0 is
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
     slice: in std_logic_vector(1 downto 0);
+    count1: in std_logic_vector(1 downto 0);
     output1 : out std_logic_vector (63 downto 0);
     output2 : out std_logic_vector (49 downto 0)
     );
@@ -45,6 +46,7 @@ component reg1 is
     clk : in std_logic;
     mode: in std_logic_vector (1 downto 0);
     slice: in std_logic_vector(1 downto 0);
+    count1: in std_logic_vector(1 downto 0);
     output1 : out std_logic_vector (63 downto 0);
     output2 : out std_logic_vector (49 downto 0)
     );
@@ -118,8 +120,8 @@ signal interleave_out: std_logic_vector(7 downto 0);
 begin
 
 deint: deinterleave port map(ram_out, deinterleave_sig_r0, deinterleave_sig_r1);
-register0: reg0 port map(deinterleave_sig_r0, slice_out, res, clk, control(1 downto 0), control(17 downto 16), reg0_out_rho0, reg0_out_50);
-register1: reg1 port map(deinterleave_sig_r1, slice_out, res, clk, control(1 downto 0), control(17 downto 16), reg1_out_rho1, reg1_out_50);
+register0: reg0 port map(deinterleave_sig_r0, slice_out, res, clk, control(1 downto 0), control(17 downto 16), control(36 downto 35), reg0_out_rho0, reg0_out_50);
+register1: reg1 port map(deinterleave_sig_r1, slice_out, res, clk, control(1 downto 0), control(17 downto 16), control(36 downto 35), reg1_out_rho1, reg1_out_50);
 mux64_0: mux_64to4 port map(reg0_out_rho0, control(5 downto 2), rho0_in);
 mux64_1: mux_64to4 port map(reg1_out_rho1, control(9 downto 6), rho1_in);
 rho0: rho_unit port map(rho0_in, res, clk, control(15 downto 10), rho0_out);

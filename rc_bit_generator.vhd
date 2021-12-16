@@ -18,7 +18,7 @@ signal temp: std_logic_vector(63 downto 0);
 
 begin
 
-rc_bit_process : process (round)
+rc_bit_process : process (round, slice)
 
 begin
 	case round is
@@ -48,7 +48,9 @@ begin
 	    when 23 => temp <= X"8000000080008008" ;	    	    
 	    when others => temp <=(others => '0');
         end case;
-end process rc_bit_process;
 
-rc_bit <= temp(slice);
+		if(slice>=0 and slice<=63) then
+			rc_bit <= temp(slice);
+		end if;
+end process rc_bit_process;
 end behavioral;

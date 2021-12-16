@@ -38,7 +38,7 @@ int2: interleave_state port map(ct, ct_int_true);
 
 Tb_res: process
 begin
-  wait for 100 ns;
+  wait for 200 ns;
   res_sig <= '1';
 end process Tb_res;
 
@@ -76,7 +76,7 @@ begin
         hread(vec_line, vec_ct);
         ct <= vec_ct;
 
-        wait for 2296800 ns;
+        wait for 2296900 ns;
 
         if (ct_int_true /= ct_int) then
           assert false report "invalid ciphertext" severity failure;

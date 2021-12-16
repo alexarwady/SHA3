@@ -20,7 +20,7 @@ component datapath is
     ram_in: out std_logic_vector(7 downto 0);
     clk: in std_logic;
     res: in std_logic;
-    control: in std_logic_vector(34 downto 0)
+    control: in std_logic_vector(36 downto 0)
     ); 
 end component;
 
@@ -32,7 +32,7 @@ component control_unit is
     output_ram: in std_logic_vector(7 downto 0);
     state_out: out std_logic_vector(1599 downto 0);
     input_ram: out std_logic_vector(7 downto 0);
-    control_out: out std_logic_vector(34 downto 0);
+    control_out: out std_logic_vector(36 downto 0);
     ram_we: out std_logic;
     ram_out: out std_logic_vector(7 downto 0)
     );
@@ -61,7 +61,7 @@ end component;
 signal addr_r_sig: std_logic_vector(7 downto 0) := (others => '0');
 signal ram_input_sig, ram_output_sig, write_ram, write_ram_in: std_logic_vector(7 downto 0) := (others => '0');
 signal we_sig: std_logic := '0';
-signal control_out_sig: std_logic_vector(34 downto 0) := (others => '0');
+signal control_out_sig: std_logic_vector(36 downto 0) := (others => '0');
 
 begin
 
