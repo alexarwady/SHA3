@@ -36,9 +36,7 @@ count <= to_integer(unsigned(count1));
 p_clk: process (res, clk, mode, slice, temp, storedbits, input1, input2, count)
   begin
     if(rising_edge(clk)) then
-      if res='0' then          
-        storedbits <= (others => '0');
-      elsif mode = "10" then 
+      if mode = "10" then 
         storedbits <= storedbits(59 downto 0) & input1;
       elsif mode = "00" then
         storedbits <= storedbits(59 downto 12) & input1 & storedbits(11 downto 0);
@@ -64,6 +62,7 @@ p_clk: process (res, clk, mode, slice, temp, storedbits, input1, input2, count)
           storedbits(13) <= input2(0);
         elsif count = 0 and slice = "01" then
           storedbits(15) <= input2(0);
+        else null;
         end if;
         
       end if;
@@ -71,6 +70,7 @@ p_clk: process (res, clk, mode, slice, temp, storedbits, input1, input2, count)
 
     if(slice = "00") then temp <= storedbits(63 downto 16) & storedbits(13 downto 12);
     elsif(slice = "01") then temp <= storedbits(63 downto 14);
+    else null;
     end if;
   end process p_clk;
 

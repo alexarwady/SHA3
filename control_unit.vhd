@@ -112,7 +112,7 @@ comb_logic: process(slice_sig, round_sig, temp, temp1, temp2, state_in, state_ou
     when state_r =>
     state_out_sig(((current-1)*8+7) downto ((current-1)*8)) <= output_ram;
 
-    when others =>
+    when others => null;
   
     end case;
   end process;

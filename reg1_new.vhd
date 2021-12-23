@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity reg0_new is
+entity reg1_new is
 
   port (
     input1 : in std_logic_vector (3 downto 0);
@@ -16,9 +16,9 @@ entity reg0_new is
     output2 : out std_logic_vector (49 downto 0)
     );
     
-end entity reg0_new;
+end entity reg1_new;
 
-architecture behavioral of reg0_new is
+architecture behavioral of reg1_new is
 
 signal input, storedbits: std_logic_vector(63 downto 0);
 signal count: integer;
@@ -46,26 +46,26 @@ begin
     elsif mode = "01" then
         -- this is ugly; use 2 rotations (<< count, >> count) to perform this substitution
         feed := storedbits;
-        feed(63 - count) := input2(18);
-        feed(59 - count) := input2(3);
-        feed(55 - count) := input2(13);
-        feed(51 - count) := input2(24);
-        feed(47 - count) := input2(9);
-        feed(43 - count) := input2(15);
-        feed(39 - count) := input2(5);
-        feed(35 - count) := input2(16);
-        feed(31 - count) := input2(1);
-        feed(27 - count) := input2(11);
-        feed(23 - count) := input2(22);
-        feed(19 - count) := input2(7);
+        feed(63 - count) := input2(23);
+        feed(59 - count) := input2(8);
+        feed(55 - count) := input2(19);
+        feed(51 - count) := input2(4);
+        feed(47 - count) := input2(14);
+        feed(43 - count) := input2(20);
+        feed(39 - count) := input2(10);
+        feed(35 - count) := input2(21);
+        feed(31 - count) := input2(6);
+        feed(27 - count) := input2(17);
+        feed(23 - count) := input2(2);
+        feed(19 - count) := input2(12);
 
-        if count = 3 and slice = "00" then
+        if count = 2 and slice = "00" then
             feed(12) := input2(0);
-        elsif count = 3 and slice = "01" then
+        elsif count = 2 and slice = "01" then
             feed(14) := input2(0);
-        elsif count = 1  and slice = "00" then
+        elsif count = 0  and slice = "00" then
             feed(13) := input2(0);
-        elsif count = 1 and slice = "01" then
+        elsif count = 0 and slice = "01" then
             feed(15) := input2(0);
         else null;
         end if;
