@@ -44,7 +44,6 @@ begin
     elsif mode = "00" then
         feed := storedbits(59 downto 12) & input1 & storedbits(11 downto 0);
     elsif mode = "01" then
-        -- this is ugly; use 2 rotations (<< count, >> count) to perform this substitution
         feed := storedbits;
         feed(63 - count) := input2(18);
         feed(59 - count) := input2(3);

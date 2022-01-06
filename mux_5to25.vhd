@@ -19,6 +19,7 @@ signal temp: std_logic_vector(24 downto 0);
 
 begin
 
+-- replicate the 5 bits into a 25 bits vector
 temp(18) <= input1(0); temp(19) <= input1(1); temp(15) <= input1(2); temp(16) <= input1(3); temp(17) <= input1(4);
 temp(23) <= input1(0); temp(24) <= input1(1); temp(20) <= input1(2); temp(21) <= input1(3); temp(22) <= input1(4);
 temp(3) <= input1(0); temp(4) <= input1(1); temp(0) <= input1(2); temp(1) <= input1(3); temp(2) <= input1(4);

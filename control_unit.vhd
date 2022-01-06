@@ -8,9 +8,9 @@ entity control_unit is
   port (
     clk: in std_logic;
     res: in std_logic;
-    state_in: in std_logic_vector(1599 downto 0);
+    state_in: in std_logic_vector(7 downto 0);
     output_ram: in std_logic_vector(7 downto 0);
-    state_out: out std_logic_vector(1599 downto 0);
+    state_out: out std_logic_vector(7 downto 0);
     input_ram: out std_logic_vector(7 downto 0);
     control_out: out std_logic_vector(36 downto 0);
     ram_we: out std_logic;
@@ -40,32 +40,48 @@ component rho_constant_generator is
 end component;
 
 type state_type is (preamble_l, preamble_c, slice_l, slice_c, slice_w, rho_l, rho_c, rho_w, state_w, state_r);
-signal current_state: state_type;
-signal control_output: std_logic_vector(34 downto 0);
-signal ram_we_sig: std_logic;
+signal current_state, next_state: state_type; -- current state of the finite state machine
+signal control_output: std_logic_vector(34 downto 0); -- control signal
+signal ram_we_sig: std_logic; -- RAM write enable control signal
 signal count: integer; -- counter for load/store to RAM
 signal offset: integer; -- counter for looping over slice/rho phase
-signal current: integer; -- ram_out address
-signal round: integer; -- counter for round (between 0 and 24 because of the implementation)
+signal current: integer; -- address fed into the RAM address
+signal round: integer; -- counter for round
 signal slice: integer; -- counter for slice phase
 signal slice_sig: integer; -- slice number for RC bit generation
 signal rc_bit: std_logic; -- RC bit signal
-signal round_sig: integer;
-signal rho_constant0_sig, rho_constant1_sig: std_logic_vector (5 downto 0);
-signal mux_64_0, mux_64_1: std_logic_vector(3 downto 0);
-signal input_ram_sig: std_logic_vector(7 downto 0);
-signal state_out_sig: std_logic_vector(1599 downto 0);
-signal temp: std_logic_vector(3 downto 0);
-signal temp1: std_logic_vector(7 downto 0);
-signal temp2: std_logic;
-signal temp3: std_logic_vector(1 downto 0);
-signal count1: integer;
+signal round_sig: integer; -- round signal for RC bit generation
+signal rho_constant0_sig, rho_constant1_sig: std_logic_vector (5 downto 0); -- constants for the rho phase
+signal mux_64_0, mux_64_1: std_logic_vector(3 downto 0); -- mux chooser for the rho phase
+signal input_ram_sig: std_logic_vector(7 downto 0); -- RAM write input
+signal state_out_sig: std_logic_vector(7 downto 0); -- state output into the the testbench
+signal temp: std_logic_vector(3 downto 0);  -- 3 downto 2: mux100 and  1 downto 0: slice signal in reg0 and reg1 (offset mod 2)
+signal temp1: std_logic_vector(7 downto 0); -- mux64to4 control
+signal temp2: std_logic; -- RC bit in slice unit
+signal temp3: std_logic_vector(1 downto 0); -- count in reg0 and reg1
+signal count1: integer; -- same as temp3 but as integer
+
+-- control signal bits explanation:
+-- 0 -> 1 : register mode
+-- 2 -> 5 and 6 -> 9 : mux_64to4 chooser
+-- 10 -> 15 and 18 -> 23 : rho units shift
+-- 17 -> 16 : registers slice input control
+-- 24 : mux in SHA3 chooser
+-- 25 : sig_100 write enable
+-- 26 -> 27 : mux_100to25 chooser
+-- 28 -> 31 : slice unit control
+-- 32 -> 33 : mux4 choosers in datapath
+-- 34 : chip select control signal
+-- 35 -> 36 : registers count input control
 
 begin
 
 comb_logic: process(slice_sig, round_sig, temp, temp1, temp2, state_in, state_out_sig, input_ram_sig, output_ram, rc_bit, current_state, current, count, offset, control_output, round, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1, slice, ram_we_sig)
 
   begin
+
+    current_state <= next_state; -- put in the next state
+
     slice_sig <= offset*4 + slice;
     round_sig <= (round - 1) mod 24;
     ram_out <= std_logic_vector(to_unsigned(current, 8));
@@ -74,10 +90,10 @@ comb_logic: process(slice_sig, round_sig, temp, temp1, temp2, state_in, state_ou
     input_ram <= input_ram_sig;
     state_out <= state_out_sig;
 
-    case current_state is
+    case next_state is
 
     when state_w =>
-    input_ram_sig <= state_in((current*8+7) downto (current*8));
+    input_ram_sig <= state_in;
     temp2 <= '0';
     temp1 <= (others => '0');
     temp <= (others => '0');
@@ -110,7 +126,7 @@ comb_logic: process(slice_sig, round_sig, temp, temp1, temp2, state_in, state_ou
     temp2 <= temp2;
 
     when state_r =>
-    state_out_sig(((current-1)*8+7) downto ((current-1)*8)) <= output_ram;
+    state_out_sig <= output_ram;
 
     when others => null;
   
@@ -120,8 +136,8 @@ comb_logic: process(slice_sig, round_sig, temp, temp1, temp2, state_in, state_ou
 seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, count, offset, control_output, round, rho_constant0_sig, rho_constant1_sig, mux_64_0, mux_64_1, slice, ram_we_sig)
   begin
     if(res = '0') then
-      current_state <= state_w;
-      current <= 0;
+      next_state <= state_w;
+      current <= -1;
       control_output <= "10000000001000000000000000000000000";
       ram_we_sig <= '1';
       count <= 0;
@@ -129,9 +145,8 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
       round <= 0;
       slice <= 0;
       count1 <= 3;
-    end if;
 
-    if(rising_edge(clk) and res = '1') then
+    elsif(rising_edge(clk)) then
       case current_state is
 
       -- write state to RAM
@@ -144,7 +159,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         count <= 0;
         offset <= 15;
         control_output <= "10000000000000000000000000000000000";
-        current_state <= preamble_l;
+        next_state <= preamble_l;
       end if;
 
       -- load last 4 slices
@@ -159,7 +174,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
       elsif(count = 12) then
         count <= count + 1;
       elsif(count = 13) then
-        current_state <= preamble_c;
+        next_state <= preamble_c;
         control_output(25) <= '1';
         control_output(34) <= '0';
         control_output(1 downto 0) <= "11";
@@ -177,7 +192,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
 
       -- perform one slice unit cycle for parity register of slice 63
       when preamble_c =>
-      current_state <= slice_l;
+      next_state <= slice_l;
       offset <= 0;
       current <= 0;
       control_output(25) <= '0';
@@ -198,7 +213,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
       elsif(count = 12) then
         count <= count + 1;
       elsif(count = 13) then
-        current_state <= slice_c;
+        next_state <= slice_c;
         control_output(25) <= '1';
         control_output(28) <= '0';
         control_output(1 downto 0) <= "01";
@@ -222,7 +237,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         count1 <= (count1 - 1) mod 4;
       elsif(slice =3) then
         count1 <= (count1 - 1) mod 4;
-        current_state <= slice_w;
+        next_state <= slice_w;
         ram_we_sig <= '1';
         slice <= (slice + 1) mod 4;
         count <= 0;
@@ -249,7 +264,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         control_output(1 downto 0) <= "00";
         control_output(30) <= '0';
         control_output(28) <= '1'; -- set we bit of parity register to 1
-        current_state <= slice_l;
+        next_state <= slice_l;
       elsif(count = 12 and offset = 15 and round /=24) then 
         count <= 0;
         offset <= 0;
@@ -257,16 +272,16 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         control_output(34) <= '1';
         ram_we_sig <= '0';
         control_output(1 downto 0) <= "10";
-        current_state <= rho_l;
+        next_state <= rho_l;
       elsif(count = 12 and offset = 15 and round = 24) then 
         count <= count + 1;
         current <= 0;
         ram_we_sig <= '0';
       elsif(count = 13 and offset = 15 and round = 24) then
-        current <= 1;
+        current <= 0;
         control_output(34) <= '1';
         ram_we_sig <= '0';
-        current_state <= state_r;
+        next_state <= state_r;
       end if;
 
       -- load 2 lanes from RAM
@@ -284,7 +299,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         control_output(33 downto 32) <= "00";
         count <= 0;
         current <= 16*offset;
-        current_state <= rho_c;
+        next_state <= rho_c;
       end if;
 
       -- store first 4 nibbles in rho unit register
@@ -294,7 +309,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
       control_output(15 downto 10) <= rho_constant0_sig;
       control_output(23 downto 18) <= rho_constant1_sig;
       control_output(33 downto 32) <= "00";
-      current_state <= rho_w;
+      next_state <= rho_w;
 
       -- write 2 lanes to RAM
       when rho_w =>
@@ -309,7 +324,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         control_output(34) <= '1';
         ram_we_sig <= '0';
         control_output(1 downto 0) <= "10";
-        current_state <= rho_l;
+        next_state <= rho_l;
       elsif(count = 15 and offset = 11) then
         ram_we_sig <= '0';
         count <= 0;
@@ -319,7 +334,7 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         control_output(34) <= '1';
         control_output(1 downto 0) <= "00";
 
-        current_state <= preamble_l;
+        next_state <= preamble_l;
       end if;
 
       -- write state to RAM
@@ -332,10 +347,10 @@ seq_logic: process(clk, res, input_ram_sig, rc_bit, current_state, current, coun
         ram_we_sig <= '1';
         control_output(24) <= '1';
         control_output(34) <= '1';
-        current_state <= state_w;
+        next_state <= state_w;
       end if;
 
-      when others => current_state <= preamble_l;
+      when others => next_state <= preamble_l;
 
     end case;
     end if;

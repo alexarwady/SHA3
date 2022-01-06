@@ -7,8 +7,9 @@ entity sha3 is
   port (
     clk: in std_logic;
     res: in std_logic;
-    pt: in std_logic_vector(1599 downto 0);
-    ct: out std_logic_vector(1599 downto 0)
+    pt: in std_logic_vector(7 downto 0);
+    ct: out std_logic_vector(7 downto 0);
+    current: out std_logic_vector(7 downto 0)
   );
 end entity sha3;
 
@@ -28,9 +29,9 @@ component control_unit is
   port (
     clk: in std_logic;
     res: in std_logic;
-    state_in: in std_logic_vector(1599 downto 0);
+    state_in: in std_logic_vector(7 downto 0);
     output_ram: in std_logic_vector(7 downto 0);
-    state_out: out std_logic_vector(1599 downto 0);
+    state_out: out std_logic_vector(7 downto 0);
     input_ram: out std_logic_vector(7 downto 0);
     control_out: out std_logic_vector(36 downto 0);
     ram_we: out std_logic;
@@ -65,6 +66,7 @@ signal control_out_sig: std_logic_vector(36 downto 0) := (others => '0');
 
 begin
 
+current <= addr_r_sig;
 ctrl1: control_unit port map(clk, res, pt, ram_output_sig, ct, write_ram, control_out_sig, we_sig, addr_r_sig);
 mux1: mux8 port map(ram_input_sig, write_ram, control_out_sig(24), write_ram_in);
 ram1: ram port map(addr_r_sig, write_ram_in, we_sig, clk, control_out_sig(34), ram_output_sig);

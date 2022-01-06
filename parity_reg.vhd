@@ -20,9 +20,7 @@ begin
 
 p_clk: process (res, clk)
   begin
-    if res='0' then          
-      p_out <= (others => '0');
-    elsif clk'event and clk ='1' and we = '0' then
+    if(clk'event and clk ='1' and we = '0') then
       p_out <= p_in;                    
     end if;
   end process p_clk;

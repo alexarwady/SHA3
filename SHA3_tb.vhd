@@ -14,8 +14,9 @@ component sha3 is
   port (
     clk: in std_logic;
     res: in std_logic;
-    pt: in std_logic_vector(1599 downto 0);
-    ct: out std_logic_vector(1599 downto 0)
+    pt: in std_logic_vector(7 downto 0);
+    ct: out std_logic_vector(7 downto 0);
+    current: out std_logic_vector(7 downto 0)
   );
 end component;
 
@@ -29,12 +30,25 @@ end component;
 signal clk_sig: std_logic;
 signal res_sig: std_logic := '0';
 signal pt, ct, pt_int, ct_int, ct_int_true: std_logic_vector(1599 downto 0);
+signal pt_cont, ct_cont, current_cont: std_logic_vector(7 downto 0);
+signal current_int: integer;
 
 begin
 
-uut: sha3 port map(clk_sig, res_sig, pt_int, ct_int);
+uut: sha3 port map(clk_sig, res_sig, pt_cont, ct_cont, current_cont);
 int1: interleave_state port map(pt, pt_int);
 int2: interleave_state port map(ct, ct_int_true);
+current_int <= to_integer(unsigned((current_cont)));
+
+process(current_int, pt_cont, ct_cont)
+begin
+  if(current_int>=0 and current_int<=199) then
+    pt_cont <= pt_int((current_int*8+7) downto (current_int*8));
+  end if;
+  if(current_int>=0 and current_int<=199) then
+    ct_int(((current_int)*8+7) downto ((current_int)*8)) <= ct_cont;
+  end if;
+end process;
 
 Tb_res: process
 begin
@@ -63,6 +77,8 @@ begin
 
     file_open(test_vectors_file, "test_vectors.txt", read_mode);
 
+    wait for 200 ns;
+
     while not endfile(test_vectors_file) loop
         report "id: " & integer'image(id); id := id + 1;
 
@@ -80,6 +96,8 @@ begin
 
         if (ct_int_true /= ct_int) then
           assert false report "invalid ciphertext" severity failure;
+        else
+          report "id " & integer'image(id-1) & ": correct ciphertext";
         end if;
     end loop;
 
